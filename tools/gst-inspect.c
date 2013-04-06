@@ -2177,7 +2177,7 @@ real_main (int argc, char *argv[])
   if (!g_option_context_parse (ctx, &argc, &argv, &err))
 #endif
   {
-    g_printerr ("Error initializing: %s\n", err->message);
+    g_printerr ("Error initializing: %s\n", err ? err->message : "(null)");
     g_clear_error (&err);
     g_option_context_free (ctx);
     return -1;
