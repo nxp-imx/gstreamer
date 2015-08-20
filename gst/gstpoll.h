@@ -104,6 +104,9 @@ GST_API
 gboolean        gst_poll_fd_can_read      (const GstPoll *set, GstPollFD *fd);
 
 GST_API
+gboolean        gst_poll_fd_can_read_pri  (const GstPoll *set, GstPollFD *fd);
+
+GST_API
 gboolean        gst_poll_fd_can_write     (const GstPoll *set, GstPollFD *fd);
 
 GST_API
