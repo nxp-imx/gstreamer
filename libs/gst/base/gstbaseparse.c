@@ -3217,6 +3217,7 @@ gst_base_parse_chain (GstPad * pad, GstObject * parent, GstBuffer * buffer)
         parse->priv->discont = TRUE;
       }
     }
+    GST_BUFFER_FLAG_UNSET(buffer, GST_BUFFER_FLAG_DISCONT);
     gst_adapter_push (parse->priv->adapter, buffer);
   }
 
