@@ -3198,6 +3198,21 @@ gst_base_parse_chain (GstPad * pad, GstObject * parent, GstBuffer * buffer)
             && parse->priv->passthrough)) {
       GstBaseParseFrame frame;
 
+    av = gst_adapter_available (parse->priv->adapter);
+    if (av) {
+      tmpbuf = gst_adapter_take_buffer (parse->priv->adapter, av);
+
+      if (parse->priv->upstream_format == GST_FORMAT_TIME) {
+        tmpbuf = gst_buffer_make_writable (tmpbuf);
+        GST_BUFFER_PTS (tmpbuf) = parse->priv->next_pts;
+        GST_BUFFER_DTS (tmpbuf) = parse->priv->next_dts;
+        GST_BUFFER_DURATION (tmpbuf) = GST_CLOCK_TIME_NONE;
+      }
+
+      ret = gst_pad_push (parse->srcpad, tmpbuf);
+
+    }
+
       gst_base_parse_frame_init (&frame);
       frame.buffer = gst_buffer_make_writable (buffer);
       ret = gst_base_parse_push_frame (parse, &frame);
