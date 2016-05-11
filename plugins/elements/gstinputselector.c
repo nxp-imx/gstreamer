@@ -773,7 +773,7 @@ gst_input_selector_wait_running_time (GstInputSelector * sel,
     }
 
     cur_running_time = GST_CLOCK_TIME_NONE;
-    if (sel->sync_mode == GST_INPUT_SELECTOR_SYNC_MODE_CLOCK) {
+    if (sel->sync_mode == GST_INPUT_SELECTOR_SYNC_MODE_CLOCK || active_selpad->eos) {
       clock = gst_element_get_clock (GST_ELEMENT_CAST (sel));
       if (clock) {
         GstClockTime base_time;
@@ -824,7 +824,13 @@ gst_input_selector_wait_running_time (GstInputSelector * sel,
           "Waiting for active streams to advance. %" GST_TIME_FORMAT " >= %"
           GST_TIME_FORMAT, GST_TIME_ARGS (running_time),
           GST_TIME_ARGS (cur_running_time));
-      GST_INPUT_SELECTOR_WAIT (sel);
+      if (active_selpad->eos) {
+        GST_INPUT_SELECTOR_UNLOCK (sel);
+        g_usleep (5000);
+        GST_INPUT_SELECTOR_LOCK (sel);
+      } else {
+        GST_INPUT_SELECTOR_WAIT (sel);
+      }
     } else {
       GST_INPUT_SELECTOR_UNLOCK (sel);
       break;
