@@ -164,6 +164,7 @@ struct _GstSelectorPad
   guint32 segment_seqnum;       /* sequence number of the current segment */
 
   gboolean events_pending;      /* TRUE if sticky events need to be updated */
+  gboolean flush_events_pending;/* unblock old active track */
 
   gboolean sending_cached_buffers;
   GQueue *cached_buffers;
@@ -344,6 +345,7 @@ gst_selector_pad_reset (GstSelectorPad * pad)
   pad->eos = FALSE;
   pad->eos_sent = FALSE;
   pad->events_pending = FALSE;
+  pad->flush_events_pending = FALSE;
   pad->discont = FALSE;
   pad->flushing = FALSE;
   gst_segment_init (&pad->segment, GST_FORMAT_UNDEFINED);
@@ -578,6 +580,8 @@ gst_selector_pad_event (GstPad * pad, GstObject * parent, GstEvent * event)
         GST_DEBUG_OBJECT (selpad, "unlock clock wait");
         gst_clock_id_unschedule (selpad->clock_id);
       }
+      if (selpad->flush_events_pending)
+        forward = TRUE;
       GST_INPUT_SELECTOR_BROADCAST (sel);
       break;
     case GST_EVENT_FLUSH_STOP:
@@ -1221,6 +1225,7 @@ gst_selector_pad_chain (GstPad * pad, GstObject * parent, GstBuffer * buf)
     buf = gst_buffer_ref (buf);
   res = gst_pad_push (sel->srcpad, buf);
   GST_LOG_OBJECT (pad, "Buffer %p forwarded result=%d", buf, res);
+  selpad->flush_events_pending = FALSE;
 
   GST_INPUT_SELECTOR_LOCK (sel);
 
@@ -1511,8 +1516,12 @@ gst_input_selector_set_active_pad (GstInputSelector * self, GstPad * pad)
   active_pad_p = &self->active_sinkpad;
   gst_object_replace ((GstObject **) active_pad_p, GST_OBJECT_CAST (pad));
 
-  if (old && old != new)
+  if (old && old != new) {
     gst_pad_push_event (GST_PAD_CAST (old), gst_event_new_reconfigure ());
+    /* Old will be blocked on gst_pad_push() when set active pad in PAUSE
+     * state. Need flush when set active pad and then seek in PAUSE state */
+    old->flush_events_pending = TRUE;
+  }
   if (new)
     gst_pad_push_event (GST_PAD_CAST (new), gst_event_new_reconfigure ());
 
