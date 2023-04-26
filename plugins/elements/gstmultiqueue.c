@@ -2847,6 +2847,23 @@ gst_multi_queue_sink_query (GstPad * pad, GstObject * parent, GstQuery * query)
   mq = (GstMultiQueue *) parent;
 
   switch (GST_QUERY_TYPE (query)) {
+    case GST_QUERY_BUFFERING:
+    {
+      gint percent = 0;
+      if (sq->is_eos || sq->is_segment_done ||
+        sq->srcresult == GST_FLOW_NOT_LINKED || sq->is_sparse) {
+        percent = 100;
+      } else {
+        if (gst_data_queue_is_empty (sq->queue)) {
+          percent = 0;
+        } else if (gst_data_queue_is_full (sq->queue)) {
+          percent = 100;
+        }
+      }
+      gst_query_set_buffering_percent (query, mq->use_interleave, percent);
+      res = TRUE;
+      break;
+    }
     default:
       if (GST_QUERY_IS_SERIALIZED (query)) {
         guint32 curid;
