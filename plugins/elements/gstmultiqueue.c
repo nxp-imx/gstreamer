@@ -2861,6 +2861,14 @@ gst_multi_queue_sink_query (GstPad * pad, GstObject * parent, GstQuery * query)
         }
       }
       gst_query_set_buffering_percent (query, mq->use_interleave, percent);
+
+      /* support query buffering range if use interleave */
+      GstFormat format;
+      gst_query_parse_buffering_range (query, &format, NULL, NULL, NULL);
+      if ((format == GST_FORMAT_TIME) && mq->use_interleave) {
+        gst_query_set_buffering_range (query, format, sq->src_segment.position,
+          sq->sink_segment.position, mq->min_interleave_time);
+      }
       res = TRUE;
       break;
     }
