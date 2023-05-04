@@ -128,7 +128,7 @@ enum
 /* default property values */
 #define DEFAULT_MAX_SIZE_BUFFERS  200   /* 200 buffers */
 #define DEFAULT_MAX_SIZE_BYTES    (10 * 1024 * 1024)    /* 10 MB       */
-#define DEFAULT_MAX_SIZE_TIME     GST_SECOND    /* 1 second    */
+#define DEFAULT_MAX_SIZE_TIME     2 * GST_SECOND        /* 2 second    */
 
 #define GST_QUEUE_MUTEX_LOCK(q) G_STMT_START {                          \
   g_mutex_lock (&q->qlock);                                              \
